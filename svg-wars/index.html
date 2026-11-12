@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVG Wars</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Lilita+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <main id="arena">
+    <canvas id="stage" aria-label="Battlefield. Paint units, then press Fight."></canvas>
+
+    <h1 class="brand">SVG<span>Wars</span></h1>
+    <button class="ibtn" id="menuBtn" aria-expanded="false" aria-controls="menuPop" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="tally" id="tally" aria-live="off"></div>
+
+    <!-- settings: small icons in the corner (wide screens) -->
+    <div class="corner" id="corner">
+      <button class="ibtn" id="soundIco" aria-label="Sound" title="Sound (M)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4Z"/><path class="on" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+      <button class="ibtn" id="helpIco" aria-label="Controls" title="Controls"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 0 1 5 1c0 1.8-2.5 2.2-2.5 3.8"/><circle cx="12" cy="17.2" r=".9" fill="currentColor"/></svg></button>
+    </div>
+
+    <!-- the menu: a dropdown on narrow screens; on wide screens only its "start" group shows, across the top -->
+    <div class="pop menu hidden" id="menuPop">
+      <span class="mhead">Start from</span>
+      <button id="battlesBtn" class="start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4 3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5Z"/><path d="M9 4v13.5M15 6.5V20"/></svg><b>Scenarios</b><span>Ready-made battlefields</span></button>
+      <button id="genBtn" class="start"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg><b>Random</b><span>Roll a random matchup</span></button>
+      <span class="mhead">This field</span>
+      <button id="balanceBtn"><b>Balance</b><span>Even out the armies’ points</span></button>
+      <button id="doubleBtn"><b>Double</b><span>Every fighter gets a twin beside it</span></button>
+      <button id="clearBtn"><b>Clear</b><span>Remove everything</span></button>
+      <div class="menusec">
+        <span>Who fights whom</span>
+        <div class="seg" role="group" aria-label="Who fights whom" id="modeSeg">
+          <button id="modeTeams" aria-pressed="true" title="Same colour fights together">Teams</button>
+          <button id="modeUnits" aria-pressed="false" title="Every kind of fighter is its own side">Units</button>
+          <button id="modeFFA" aria-pressed="false" title="Every fighter for themselves">Free-for-all</button>
+        </div>
+      </div>
+      <div class="menurow">
+        <button id="soundBtn">Sound on</button>
+        <button id="helpBtn">Controls</button>
+      </div>
+    </div>
+
+    <!-- ============ the dock: pick, paint, fight ============ -->
+    <div id="dock">
+      <div class="dock-main" id="dockMain">
+        <div class="dockrow">
+          <div class="tabs" id="tabs" role="tablist" aria-label="What to place"></div>
+          <div class="ctxgroup" id="ctxTeams">
+            <div class="teams" id="teams" role="group" aria-label="Team"></div>
+            <button class="ibtn" id="recolorBtn" data-key="T" aria-pressed="false" aria-label="Switch team" title="Paint over fighters to move them to the selected team (T)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h14l-3.5-3.5M20 16H6l3.5 3.5"/></svg></button>
+          </div>
+          <button class="keepchip" id="keepChip" data-key="K" role="switch" aria-checked="false" title="When on, new terrain only fills bare grass and never paints over existing terrain (K)"><span class="box"></span>Keep existing terrain</button>
+        </div>
+        <div class="strip">
+          <button class="nav l" id="cardsL" aria-label="Scroll left" tabindex="-1">‹</button>
+          <div class="cards" id="cards"></div>
+          <button class="nav r" id="cardsR" aria-label="Scroll right" tabindex="-1">›</button>
+        </div>
+      </div>
+      <div class="dockrow actions">
+        <span class="edit-only tools">
+          <button class="ibtn" id="eraseBtn" data-key="E" aria-pressed="false" aria-label="Erase" title="Erase fighters and terrain (E, or hold Shift)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 19 3.6 14.1a1.6 1.6 0 0 1 0-2.2l8.3-8.3a1.6 1.6 0 0 1 2.2 0l6.3 6.3a1.6 1.6 0 0 1 0 2.2L13.5 19Z"/><path d="M8 8l8 8M6 19h14"/></svg></button>
+          <button class="ibtn" id="brushBtn" data-key="+/-" aria-expanded="false" aria-controls="brushPop" aria-label="Brush size" title="Brush size and options"><i class="dot" id="brushDot"></i><b id="brushVal">36</b></button>
+          <button class="ibtn" id="undoBtn" data-key="Z" aria-label="Undo" title="Undo (Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5 4 9l4 4"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+          <button class="ibtn railonly" id="railBalance" data-key="B" aria-label="Balance the armies" title="Balance: even out the armies’ points, keeping each army’s mix (B)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16M7 20h10M5 7h14"/><path d="M5 7l-2.5 6a2.5 2.5 0 0 0 5 0Z"/><path d="M19 7l-2.5 6a2.5 2.5 0 0 0 5 0Z"/></svg></button>
+          <button class="ibtn railonly" id="railDouble" data-key="X" aria-label="Double the armies" title="Double: every fighter gets a twin standing beside it (X)"><b class="x2">×2</b></button>
+          <button class="ibtn railonly" id="railClear" aria-label="Clear the field" title="Clear: remove everything from the field"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/></svg></button>
+        </span>
+        <span class="battle-only tools">
+          <button class="tool" id="dockToggle" aria-expanded="false" aria-controls="dockMain" title="Show the fighters and powers to keep painting mid-battle">Toybox</button>
+          <button class="tool" id="resetBtn" title="Put everyone back where they started (R)" disabled>Reset</button>
+          <div class="seg" role="group" aria-label="Speed" id="speeds"></div>
+        </span>
+        <button class="sel edit-only" id="selBtn" aria-expanded="false" aria-controls="info" title="About the selected piece"></button>
+        <button class="fight" id="fightBtn">Fight!</button>
+      </div>
+    </div>
+
+    <div class="pop info hidden" id="info"></div>
+
+    <div class="pop menu hidden" id="brushPop">
+      <div class="row">
+        <label for="brush">Size</label>
+        <button class="step" id="brushDown" title="Smaller brush (−)" aria-label="Smaller brush">−</button>
+        <input id="brush" type="range" min="0" max="140" value="36">
+        <button class="step" id="brushUp" title="Bigger brush (+)" aria-label="Bigger brush">+</button>
+      </div>
+      <button class="check" id="keepBtn" data-key="K" role="switch" aria-checked="false">
+        <span class="box"></span>
+        <span><b>Keep existing terrain</b><small>New terrain only fills bare grass</small></span>
+      </button>
+    </div>
+
+    <div class="pop confirm hidden" id="clearPop" role="alertdialog" aria-labelledby="clearQ">
+      <p id="clearQ">Clear the whole field?</p>
+      <div class="row"><button class="tool" id="clearNo">Cancel</button><button class="tool danger" id="clearYes">Clear</button></div>
+    </div>
+
+    <div class="pop hidden" id="battles" role="dialog" aria-label="Scenarios"></div>
+
+    <div class="pop help hidden" id="help">
+      <h3>Controls</h3>
+      <button class="check hintsw" id="hintsBtn" role="switch" aria-checked="false"><span class="box"></span><span><b>Show shortcut hints</b><small>Key letters beside the tools · or press <kbd>?</kbd></small></span></button>
+      <dl>
+        <dt>Drag</dt><dd>paint whatever is selected</dd>
+        <dt>Two fingers</dt><dd>move and zoom the view</dd>
+        <dt>Shift + drag</dt><dd>erase</dd>
+        <dt>Right-drag</dt><dd>move the view</dd>
+        <dt>Scroll</dt><dd>zoom · <kbd>F</kbd> fits the field</dd>
+        <dt><kbd>Space</kbd></dt><dd>fight / pause</dd>
+        <dt><kbd>R</kbd></dt><dd>reset the battle · <kbd>Esc</kbd> too, when paused or finished</dd>
+        <dt><kbd>G</kbd> <kbd>B</kbd></dt><dd>random battle · balance the armies</dd>
+        <dt><kbd>1</kbd>–<kbd>4</kbd></dt><dd>pick a team</dd>
+        <dt><kbd>−</kbd> <kbd>+</kbd></dt><dd>brush size</dd>
+        <dt><kbd>K</kbd></dt><dd>keep terrain: new terrain only fills bare ground</dd>
+        <dt><kbd>E</kbd> <kbd>T</kbd> <kbd>Z</kbd> <kbd>M</kbd></dt><dd>eraser, switch team, undo, mute</dd>
+        <dt><kbd>X</kbd></dt><dd>double the armies</dd>
+        <dt><kbd>?</kbd></dt><dd>show or hide shortcut hints</dd>
+      </dl>
+      <p>You can keep painting, and use Powers, while a fight is running.</p>
+      <p class="credit">Inspired by <a href="https://neal.fun/battle-draw/" target="_blank" rel="noopener">Battle Draw</a> on neal.fun</p>
+    </div>
+
+    <div class="results hidden" id="results" role="status" aria-live="polite"></div>
+    <div class="toast" id="toast" role="status"></div>
+  </main>
+</div>
+
+<script src="js/core.js"></script>
+<script src="js/world.js"></script>
+<script src="js/sim.js"></script>
+<script src="js/tactics.js"></script>
+<script src="js/nature.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/mechanics.js"></script>
+<script src="js/life.js"></script>
+<script src="js/theory.js"></script>
+<script src="js/synergy.js"></script>
+<script src="js/quirks.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/armies.js"></script>
+<script src="js/props.js"></script>
+<script src="js/reactions.js"></script>
+<script src="js/mapkit.js"></script>
+<script src="js/content/terrain.js"></script>
+<script src="js/content/props.js"></script>
+<script src="js/content/units.js"></script>
+<script src="js/content/art.js"></script>
+<script src="js/content/powers.js"></script>
+<script src="js/content/scenarios.js"></script>
+<script src="js/render.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
